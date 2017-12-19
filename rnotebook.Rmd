@@ -1,0 +1,69 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r setup}
+
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+source("requirements.R")
+
+```
+
+
+```{r build data to feather}
+train = read_csv("Data/mart_train.csv")
+test = read_csv("Data/mart_test.csv")
+
+train <- train %>% mutate(Item_Weight = replace(Item_Weight, is.na(Item_Weight), mean(train$Item_Weight, na.rm = TRUE)))
+
+test <- test %>% mutate(Item_Weight = replace(Item_Weight, is.na(Item_Weight), mean(test$Item_Weight, na.rm = TRUE)))
+
+library(feather)
+
+write_feather(train, "Data/mart_train.feather")
+write_feather(test, "Data/mart_test.feather")
+```
+
+
+```{python}
+import feather
+import os
+import pandas as pd
+import sklearn as sk
+from sklearn import model_selection
+
+os.chdir("C:\\Users\\Daniel\\Documents\\Git Repos\\big_mart")
+
+train = feather.read_dataframe(os.path.realpath("./Data/mart_train.feather"))
+test = feather.read_dataframe(os.path.realpath("./Data/mart_test.feather"))
+
+train, valid = model_selection.train_test_split(train, test_size  = 0.2, random_state = 42)
+
+print(valid)
+
+import h2o
+from h2o.estimators.random_forest import H2ORandomForestEstimator
+from h2o import export_file
+from h2o.grid.grid_search import H2OGridSearch
+
+h2o.init(max_mem_size = "4G")
+h2o.remove_all()
+
+train_h2o = h2o.H2OFrame(train)
+valid_h2o = h2o.H2OFrame(valid)
+
+print(train_h2o)
+
+
+
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
